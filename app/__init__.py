@@ -6,7 +6,6 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 migrate = Migrate()
 
-
 def create_app(config_class=None):
     """Create and configure the Flask application"""
     app = Flask(__name__)
@@ -17,17 +16,21 @@ def create_app(config_class=None):
     else:
         # Import here to avoid circular imports
         from config import get_config
-
         app.config.from_object(get_config())
 
     # Initialize extensions with the app
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Register blueprints
+    # Register blueprints with distinct prefixes
     from app.routes.stashpoints import bp as stashpoints_bp
+    from app.routes.stashpoint_search import bp as stashpoint_search_bp
 
-    app.register_blueprint(stashpoints_bp, url_prefix="/api/v1/stashpoints")
+    # Stashpoints route (get all stashpoints)
+    app.register_blueprint(stashpoints_bp, url_prefix="/api/v1/stashpoints")  # Keep this as is
+
+    # Stashpoint search route (search for stashpoints by parameters)
+    app.register_blueprint(stashpoint_search_bp, url_prefix="/api/v1/stashpoint_search")  # Change this prefix
 
     @app.route("/healthcheck")
     def healthcheck():

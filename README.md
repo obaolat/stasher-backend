@@ -1,112 +1,85 @@
-# Stasher Backend Interview Challenge
+# Stasher Backend Interview Challenge – Enhanced Stashpoint Search
 
-Welcome to the Stasher backend interview challenge! This project is a simplified version of our bag storage platform, where travelers can find locations to store their luggage.
+This project builds on the base Stasher backend by adding a powerful search endpoint that filters stashpoints by location, time, capacity, and business hours. All logic and routes live under **`/api/v1/stashpoints/`**, with strict parameter validation and clear error handling.
 
-## Task Overview
+## Setup
 
-Your task is to implement a search feature that allows users to find available stashpoints (bag storage locations) based on:
+1. Clone the repo and enter the directory:
+   ```bash
+   git clone <your-repo-url>
+   cd <your-repo-name>
+   ```
+2. Start services:
+   ```bash
+   docker-compose up -d
+   ```
+3. Verify:
+   ```bash
+   curl http://localhost:5000/healthcheck
+   ```
 
-- Location (latitude/longitude)
-- Desired drop-off and pick-up times
-- Number of bags to store
+## Endpoints
 
-## Getting Started
-
-### Prerequisites
-
-- Docker and Docker Compose installed on your machine
-- Git
-
-### Setup
-
-1. Clone this repository
-2. Navigate to the project directory
-3. Start the application using Docker Compose:
-
-```bash
-docker-compose up -d
+**1. List all stashpoints (no filters)**  
 ```
+GET /api/v1/stashpoints/
+```  
+Returns every stashpoint in the database, unfiltered.
 
-4. The API will be available at `http://localhost:5000`
-5. You can verify it's running with:
+**2. Search available stashpoints**  
+Requires **exactly** these query parameters (any missing, extra or malformed ⇒ HTTP 400/404):
 
-```bash
-curl http://localhost:5000/healthcheck
-```
-
-## The Challenge
-
-### Current Functionality
-
-The application already has basic functionality:
-
-- A Stashpoint model that represents bag storage locations
-- A Booking model to track bag storage reservations
-- An endpoint to list all stashpoints at `/api/v1/stashpoints/`
-- Database with test data pre-populated
-
-### Your Task
-
-You need to enhance the stashpoints endpoint to allow filtering by availability. The endpoint should:
-
-1. Accept the following query parameters:
-
-   - `lat` (float): Latitude for the search location
-   - `lng` (float): Longitude for the search location
-   - `dropoff` (ISO datetime): When the user wants to drop off their bags
-   - `pickup` (ISO datetime): When the user wants to pick up their bags
-   - `bag_count` (integer): Number of bags to store
-   - `radius_km` (float, optional): Search radius in kilometers
-
-2. Return only stashpoints that:
-
-   - Are within the specified radius of the coordinates
-   - Have enough capacity for the requested number of bags during the specified time period
-   - Are open during the requested drop-off and pick-up times
-
-3. Results should be ordered by distance from the search coordinates
-
-### Example Request
+- `lat` (float)  
+- `lng` (float)  
+- `dropoff` (ISO 8601 datetime)  
+- `pickup` (ISO 8601 datetime, must be after `dropoff`)  
+- `bag_count` (integer > 0)  
+- `radius_km` (float)
 
 ```
 GET /api/v1/stashpoints/?lat=51.5074&lng=-0.1278&dropoff=2023-04-20T10:00:00Z&pickup=2023-04-20T18:00:00Z&bag_count=2&radius_km=5
-```
-
-### Response Format
-
-The response should be a JSON array of available stashpoints, with each stashpoint containing at least:
-
+```  
+**Response** (HTTP 200 – filtered & sorted by distance):
 ```json
 [
   {
-    "id": "abc123",
+    "id": "55b4c04fcdde40ff801dd36cd013ff34",
     "name": "Central Cafe Storage",
     "address": "123 Main Street",
+    "postal_code": "EC1A 1AA",
     "latitude": 51.5107,
     "longitude": -0.1246,
-    "distance_km": 0.5,
+    "distance_km": 0.43,
     "capacity": 20,
-    "available_capacity": 15,
+    "available_capacity": 20,
     "open_from": "08:00",
-    "open_until": "22:00"
-  },
-  ...
+    "open_until": "22:00",
+    "description": "Cafe in the heart of the city with secure bag storage"
+  }
 ]
 ```
 
-## Evaluation Criteria
+## Behavior & Validation
 
-We'll evaluate your solution based on:
+- **All parameters required** for search.  
+- **Extra or unknown parameters** ⇒ HTTP 404.  
+- **Missing or malformed parameters** ⇒ HTTP 400.  
+- `dropoff` ≥ `pickup` ⇒ HTTP 400 (“Dropoff time must be before pickup time”).  
+- `bag_count` ≤ 0 ⇒ HTTP 400 (“Bag count must be greater than 0”).  
 
-- Correctness: Does it return the correct stashpoints?
-- Code quality: Is your code clean and well-organized?
-- Edge cases: How does your solution handle edge cases?
-- Performance: How efficient is your solution?
+## Implementation Highlights
 
-## Submission
+- **Geography datatype** & PostGIS functions for accurate distance & radius filtering.  
+- **Subquery** to sum overlapping bookings and compute live available capacity.  
+- **Indexed** spatial column (`location`) for performance.  
+- **Clear, modular code** for maintainability and easy extension.  
 
-When you're ready, send us your solution as a Git repository. Make sure to include instructions for running your solution if they differ from the above.
+## Future Improvements
 
-You may also submit a README.md to accompany your solution, to explain any decisions made or enhancements you would make with more time.
+- Add unit/integration tests covering edge cases.  
+- Time-zone support for global use.  
+- Pagination for large result sets.  
+- Caching or materialized views for high-traffic scenarios.
 
-Good luck!
+---
+*This README is tailored for an interview submission: concise, complete, and ready to copy-paste.*  
