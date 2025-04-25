@@ -24,13 +24,11 @@ def create_app(config_class=None):
 
     # Register blueprints with distinct prefixes
     from app.routes.stashpoints import bp as stashpoints_bp
-    from app.routes.stashpoint_search import bp as stashpoint_search_bp
+
 
     # Stashpoints route (get all stashpoints)
     app.register_blueprint(stashpoints_bp, url_prefix="/api/v1/stashpoints")  # Keep this as is
 
-    # Stashpoint search route (search for stashpoints by parameters)
-    app.register_blueprint(stashpoint_search_bp, url_prefix="/api/v1/stashpoint_search")  # Change this prefix
 
     @app.route("/healthcheck")
     def healthcheck():

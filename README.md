@@ -1,3 +1,4 @@
+
 # Stasher Backend Interview Challenge – Enhanced Stashpoint Search
 
 This project builds on the base Stasher backend by adding a powerful search endpoint that filters stashpoints by location, time, capacity, and business hours. All logic and routes live under **`/api/v1/stashpoints/`**, with strict parameter validation and clear error handling.
@@ -23,7 +24,7 @@ This project builds on the base Stasher backend by adding a powerful search endp
 **1. List all stashpoints (no filters)**  
 ```
 GET /api/v1/stashpoints/
-```  
+```
 Returns every stashpoint in the database, unfiltered.
 
 **2. Search available stashpoints**  
@@ -37,8 +38,22 @@ Requires **exactly** these query parameters (any missing, extra or malformed ⇒
 - `radius_km` (float)
 
 ```
-GET /api/v1/stashpoints/?lat=51.5074&lng=-0.1278&dropoff=2023-04-20T10:00:00Z&pickup=2023-04-20T18:00:00Z&bag_count=2&radius_km=5
-```  
+GET /api/v1/stashpoints/?lat=51.5074&lng=-0.1278&dropoff=2023-04-20T10:00:00&pickup=2023-04-20T18:00:00&bag_count=2&radius_km=1
+```
+
+> **Note:** In Python versions prior to 3.11, `datetime.fromisoformat()` does not support parsing the `'Z'` suffix (which represents UTC time). Therefore, **you must remove the `'Z'`** or convert it to `+00:00` before parsing. Otherwise, your request will return a `400` error.
+
+```python
+from datetime import datetime
+
+# This will raise an error in Python < 3.11
+# dropoff = datetime.fromisoformat("2023-04-20T10:00:00Z")
+
+# Correct way for compatibility
+dropoff = datetime.fromisoformat("2023-04-20T10:00:00".replace("Z", "+00:00"))
+pickup = datetime.fromisoformat("2023-04-20T18:00:00".replace("Z", "+00:00"))
+```
+
 **Response** (HTTP 200 – filtered & sorted by distance):
 ```json
 [
@@ -82,4 +97,4 @@ GET /api/v1/stashpoints/?lat=51.5074&lng=-0.1278&dropoff=2023-04-20T10:00:00Z&pi
 - Caching or materialized views for high-traffic scenarios.
 
 ---
-*This README is tailored for an interview submission: concise, complete, and ready to copy-paste.*  
+*This README is tailored for an interview submission: concise, complete, and ready to copy-paste.*
